@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'HomePage.dart';
 import 'MainScreen.dart';
 import 'SignUpScreen.dart';
 
@@ -262,7 +263,7 @@ class _SignInScreenState extends State<SignInScreen> {
         _saveCredentials();
 
         Navigator.pop(context);
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MainScreen()));
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => HomeScreen()));
       } on FirebaseAuthException catch (e) {
         Navigator.pop(context);
 
