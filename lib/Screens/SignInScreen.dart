@@ -57,149 +57,189 @@ class _SignInScreenState extends State<SignInScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: MediaQuery.of(context).size.width,
-        height: MediaQuery.of(context).size.height,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [hexaStringToColor("71EEFE"), Color(0xff227B81)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+      body: Stack(
+        children: [
+          // Gradient Background
+          Container(
+            height: double.infinity,
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(colors: [
+                Color(0xFF22223B),
+                Color(0xFF4A4E69),
+                Color(0xFF9A8C98),
+                Color(0xFFC9ADA7),
+                Color(0xFFF2E9E4),
+              ]),
+            ),
+            child: const Padding(
+              padding: EdgeInsets.only(top: 60.0, left: 22),
+              child: Text(
+                'Welcome Back\nSign in!',
+                style: TextStyle(
+                  fontSize: 30,
+                  color: Color(0xFFF2E9E4),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
           ),
-        ),
-        child: SingleChildScrollView(
-          child: Form(
-            key: formKey,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 125, 20, 0),
-              child: Column(
-                children: <Widget>[
-                  logoWidget("assets/Images/avatar.png"),
-                  const SizedBox(height: 60),
-                  TextFormField(
-                    validator: (String? value) {
-                      if (value == null || value.isEmpty) {
-                        return "Email must not be null";
-                      }
-                      if (!RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
-                          .hasMatch(value)) {
-                        return "Please enter a valid email address";
-                      }
-                      return null;
-                    },
-                    controller: emailcontroller,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: InputDecoration(
-                      labelText: "Email Address",
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(30.0)),
-                      prefixIcon: Icon(Icons.email, color: Colors.white),
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(30.0),
-                    ),
-                    child: TextFormField(
-                      validator: (String? value) {
-                        if (value!.isEmpty) {
-                          return "Password must not be null";
-                        }
-                        return null;
-                      },
-                      controller: passcontroller,
-                      keyboardType: TextInputType.visiblePassword,
-                      obscureText: !_isPasswordVisible,
-                      decoration: InputDecoration(
-                        labelText: "Password",
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(30.0)),
-                        prefixIcon: Icon(Icons.lock, color: Colors.white),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _isPasswordVisible
-                                ? Icons.visibility
-                                : Icons.visibility_off,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _isPasswordVisible = !_isPasswordVisible;
-                            });
-                          },
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-                  Row(
-                    children: [
-                      Checkbox(
-                        value: _rememberMe,
-                        onChanged: (bool? value) {
-                          setState(() {
-                            _rememberMe = value!;
-                          });
-                        },
-                      ),
-                      const Text("Remember Me")
-                    ],
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(20.0),
+          Positioned(
+            top: 200,
+            child: Container(
+              decoration: const BoxDecoration(
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(40),
+                  topRight: Radius.circular(40),
+                ),
+                color: Color(0xFFF2E9E4),
+              ),
+              height: MediaQuery.of(context).size.height - 200,
+              width: MediaQuery.of(context).size.width,
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(30.0),
+                  child: Form(
+                    key: formKey,
                     child: Column(
                       children: [
-                        Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(30.0),
-                            color: Colors.white,
+                        // User Icon
+                        CircleAvatar(
+                          radius: 70,
+                          backgroundColor: const Color(0xFF4A4E69),
+                          child: const Icon(
+                            Icons.person_outline,
+                            size: 100,
+                            color: Color(0xFFF2E9E4),
                           ),
-                          width: double.infinity,
-                          child: MaterialButton(
-                            onPressed: signin,
-                            child: Text(
-                              "Sign In",
-                              style: TextStyle(
-                                  color: Color(0xff227B81),
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 20),
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Email Field
+                        TextFormField(
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Email must not be empty';
+                            }
+                            if (!RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+                                .hasMatch(value)) {
+                              return 'Please enter a valid email';
+                            }
+                            return null;
+                          },
+                          controller: emailcontroller,
+                          decoration: InputDecoration(
+                            prefixIcon: const Icon(Icons.email, color: Color(0xFF22223B)),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15),
                             ),
+                            hintText: 'Enter Email Address',
+                            labelText: 'Email Address',
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Password Field
+                        TextFormField(
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Password must not be empty';
+                            }
+                            return null;
+                          },
+                          controller: passcontroller,
+                          obscureText: !_isPasswordVisible,
+                          decoration: InputDecoration(
+                            prefixIcon: const Icon(Icons.lock, color: Color(0xFF22223B)),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _isPasswordVisible = !_isPasswordVisible;
+                                });
+                              },
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            hintText: 'Enter Password',
+                            labelText: 'Password',
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Remember Me Checkbox
+                        Row(
+                          children: [
+                            Checkbox(
+                              value: _rememberMe,
+                              onChanged: (bool? value) {
+                                setState(() {
+                                  _rememberMe = value!;
+                                });
+                              },
+                            ),
+                            const Text("Remember Me"),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Sign In Button
+                        Container(
+                          height: 45,
+                          width: 200,
+                          child: ElevatedButton(
+                            onPressed: signin,
+                            style: ElevatedButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                              backgroundColor: const Color(0xFF22223B),
+                            ),
+                            child: const Text(
+                              "Sign In",
+                              style: TextStyle(fontWeight: FontWeight.bold,color: Colors.white),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Sign Up and Forgot Password
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text("Don't have an account? "),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => const SignUpScreen()),
+                                );
+                              },
+                              child: const Text(
+                                "Sign Up",
+                                style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF9A8C98)),
+                              ),
+                            ),
+                          ],
+                        ),
+                        TextButton(
+                          onPressed: _forgotPassword,
+                          child: const Text(
+                            "Forgot Password?",
+                            style: TextStyle(color: Color(0xFF22223B)),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text("Don't have an account?"),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (context) => SignUpScreen()),
-                          );
-                        },
-                        child: const Text(
-                          "Sign Up",
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ],
-                  ),
-                  // Add Forgot Password link
-                  TextButton(
-                    onPressed: () => _forgotPassword(),
-                    child: Text(
-                      "Forgot Password?",
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -209,59 +249,43 @@ class _SignInScreenState extends State<SignInScreen> {
       showDialog(
         context: context,
         builder: (context) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
+          return const Center(child: CircularProgressIndicator());
         },
       );
 
       try {
-        // Sign in the user with Firebase Authentication
         await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: emailcontroller.text.trim(),
           password: passcontroller.text.trim(),
         );
 
-        // Save credentials if "Remember Me" is selected
         _saveCredentials();
 
-        // Pop the loading dialog and navigate to MainScreen
-        Navigator.pop(context);  // Dismiss the dialog
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => MainScreen()),
-        );
+        Navigator.pop(context);
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MainScreen()));
       } on FirebaseAuthException catch (e) {
-        Navigator.pop(context);  // Close the loading dialog
+        Navigator.pop(context);
 
-        // Handle error based on the error code
         String message = '';
         switch (e.code) {
           case 'user-not-found':
-            message = "No user found for this email.";
+            message = 'No user found for this email.';
             break;
           case 'wrong-password':
-            message = "Incorrect password.";
-            break;
-          case 'invalid-email':
-            message = "Invalid email address.";
+            message = 'Incorrect password.';
             break;
           default:
-            message = "An error occurred. Please try again.";
+            message = 'An error occurred. Please try again.';
         }
 
-        // Show the error in an AlertDialog
         showDialog(
           context: context,
           builder: (context) {
             return AlertDialog(
-              title: Text("Error"),
+              title: const Text('Error'),
               content: Text(message),
               actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text("OK"),
-                ),
+                TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK')),
               ],
             );
           },
@@ -270,7 +294,6 @@ class _SignInScreenState extends State<SignInScreen> {
     }
   }
 
-  // Function to handle Forgot Password
   Future<void> _forgotPassword() async {
     String email = emailcontroller.text.trim();
 
@@ -279,13 +302,10 @@ class _SignInScreenState extends State<SignInScreen> {
         context: context,
         builder: (context) {
           return AlertDialog(
-            title: Text("Error"),
-            content: Text("Please enter your email address."),
+            title: const Text("Error"),
+            content: const Text("Please enter your email address."),
             actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text("OK"),
-              ),
+              TextButton(onPressed: () => Navigator.pop(context), child: const Text("OK")),
             ],
           );
         },
@@ -294,67 +314,36 @@ class _SignInScreenState extends State<SignInScreen> {
     }
 
     try {
-      // Send password reset email
       await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
       showDialog(
         context: context,
         builder: (context) {
           return AlertDialog(
-            title: Text("Password Reset"),
-            content: Text("Password reset email has been sent! Please check your inbox."),
+            title: const Text("Password Reset"),
+            content: const Text("Password reset email sent! Check your inbox."),
             actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text("OK"),
-              ),
+              TextButton(onPressed: () => Navigator.pop(context), child: const Text("OK")),
             ],
           );
         },
       );
     } on FirebaseAuthException catch (e) {
-      String message = "An error occurred. Please try again.";
-      if (e.code == 'user-not-found') {
-        message = "No user found for this email address.";
-      }
+      String message = e.code == 'user-not-found'
+          ? 'No user found for this email address.'
+          : 'An error occurred. Please try again.';
 
       showDialog(
         context: context,
         builder: (context) {
           return AlertDialog(
-            title: Text("Error"),
+            title: const Text("Error"),
             content: Text(message),
             actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text("OK"),
-              ),
+              TextButton(onPressed: () => Navigator.pop(context), child: const Text("OK")),
             ],
           );
         },
       );
     }
-  }
-
-  // Function to convert hex color string to Color object
-  Color hexaStringToColor(String hexCode) {
-    final buffer = StringBuffer();
-    if (hexCode.length == 6 || hexCode.length == 7) {
-      buffer.write('ff'); // Default opacity (ff for fully opaque)
-      buffer.write(hexCode.replaceFirst('#', ''));
-    } else {
-      throw FormatException("Invalid Hex Code Format");
-    }
-    return Color(int.parse(buffer.toString(), radix: 16));
-  }
-
-  // Function to show logo from an asset path
-  Widget logoWidget(String imagePath) {
-    return Center(
-      child: Image.asset(
-        imagePath,
-        height: 120, // Adjust the height as needed
-        width: 120,  // Adjust the width as needed
-      ),
-    );
   }
 }

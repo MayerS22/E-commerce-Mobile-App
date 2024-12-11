@@ -1,3 +1,4 @@
+import 'package:e_commerce/Screens/SplashScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'Screens/SignInScreen.dart';
@@ -13,7 +14,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: SignInScreen(), // Set initial screen
+      home: SplashScreen(), // Set initial screen
     );
   }
 }
