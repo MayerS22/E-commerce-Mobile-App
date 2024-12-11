@@ -32,12 +32,12 @@ class ProductCard extends StatelessWidget {
               borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
               child: Image.network(
                 product.image,
-                height: 120.0, // Reduced height from 200 to 150
+                height: 120.0, // Reduced height from 200 to 120
                 width: double.infinity,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
                   return Container(
-                    height: 150.0,
+                    height: 120.0,
                     width: double.infinity,
                     color: Colors.grey.shade300,
                     child: Icon(
@@ -49,10 +49,9 @@ class ProductCard extends StatelessWidget {
                 },
               ),
             ),
-
             // Product Details (Title, Price, and Rating)
             Padding(
-              padding: const EdgeInsets.all(4.0),
+              padding: const EdgeInsets.all(8.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -67,7 +66,6 @@ class ProductCard extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: 8),
-
                   // Product Price and Rating (side by side)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -81,7 +79,6 @@ class ProductCard extends StatelessWidget {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-
                       // Product Rating
                       Row(
                         children: [
@@ -93,7 +90,7 @@ class ProductCard extends StatelessWidget {
                           SizedBox(width: 4),
                           Text(
                             product.rating != null
-                                ? '${product.rating['rate']}'
+                                ? '${product.ratingRate}'
                                 : 'No rating',
                             style: TextStyle(fontSize: 14, color: Colors.grey),
                           ),

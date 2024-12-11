@@ -7,18 +7,36 @@ class ProductDetailsScreen extends StatelessWidget {
 
   ProductDetailsScreen({required this.product});
 
+  // Method to add the product to the cart (with quantity management)
   Future<void> _addToCart(Product product) async {
     try {
-      // Add the product to Firebase Firestore (Cart collection)
-      await FirebaseFirestore.instance.collection('cart').add({
-        'title': product.title,
-        'price': product.price,
-        'image': product.image,
-        'category': product.category,
-        'description': product.description,
-        'quantity': 1, // Default quantity is 1
-      });
-      print('Product added to cart');
+      final cartCollection = FirebaseFirestore.instance.collection('cart');
+
+      // Check if product already exists in the cart
+      final querySnapshot = await cartCollection.where('productId', isEqualTo: product.id).get();
+
+      if (querySnapshot.docs.isEmpty) {
+        // Add product to cart if it's not already added
+        await cartCollection.add({
+          'productId': product.id,
+          'title': product.title,
+          'price': product.price,
+          'image': product.image,
+          'category': product.category,
+          'description': product.description,
+          'quantity': 1, // Default quantity is 1
+        });
+        print('Product added to cart');
+      } else {
+        // If product already exists in cart, update the quantity
+        final cartDocId = querySnapshot.docs.first.id;
+        final cartDocRef = cartCollection.doc(cartDocId);
+
+        await cartDocRef.update({
+          'quantity': FieldValue.increment(1), // Increment quantity
+        });
+        print('Product quantity updated in cart');
+      }
     } catch (e) {
       print('Error adding product to cart: $e');
     }
@@ -85,9 +103,10 @@ class ProductDetailsScreen extends StatelessWidget {
                 children: [
                   Icon(Icons.star, color: Colors.yellow, size: 20),
                   SizedBox(width: 4),
+                  // Null-aware operator to handle missing rating
                   Text(
                     product.rating != null
-                        ? '${product.rating['rate']} (${product.rating['count']} reviews)'
+                        ? '${product.rating?['rate'] ?? 'N/A'} (${product.rating?['count'] ?? 0} reviews)'
                         : 'No ratings available',
                     style: TextStyle(fontSize: 16, color: Colors.grey),
                   ),

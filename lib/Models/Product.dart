@@ -5,7 +5,7 @@ class Product {
   final double price;
   final String image;
   final String category;
-  final Map<String, dynamic> rating; // rating as a map
+  final Map<String, dynamic>? rating; // Nullable rating map
 
   Product({
     required this.id,
@@ -14,23 +14,21 @@ class Product {
     required this.price,
     required this.image,
     required this.category,
-    required this.rating,
+    this.rating,
   });
 
-  // Factory method to create a Product from JSON data
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
       id: json['id'],
       title: json['title'],
       description: json['description'],
-      price: json['price'].toDouble(),
+      price: (json['price'] as num).toDouble(),
       image: json['image'],
       category: json['category'],
-      rating: json['rating'],  // rating should be fetched as a map from the JSON
+      rating: json['rating'] != null ? Map<String, dynamic>.from(json['rating']) : null,
     );
   }
 
-  // Safely get the rating and count values
-  double get ratingRate => rating['rate'] ?? 0.0;
-  int get ratingCount => rating['count'] ?? 0;
+  double get ratingRate => rating?['rate']?.toDouble() ?? 0.0;
+  int get ratingCount => rating?['count']?.toInt() ?? 0;
 }

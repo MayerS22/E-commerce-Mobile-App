@@ -1,48 +1,89 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:e_commerce/Models/Product.dart';
-
+import 'package:e_commerce/Models/Category.dart';
 
 class ApiService {
-  final String baseUrl = 'https://fakestoreapi.com/products';
+  final String productBaseUrl = 'https://fakestoreapi.com/products';
+  final String categoryBaseUrl = 'https://fakestoreapi.com/products/categories';
 
-  // Fetch products from the API
-  Future<List<Product>> fetchProducts() async {
+  // Fetch all categories
+  Future<List<Category>> fetchCategories() async {
     try {
-      final response = await http.get(Uri.parse(baseUrl));
+      final response = await http.get(Uri.parse(categoryBaseUrl));
 
       if (response.statusCode == 200) {
-        // If the response is successful, parse the data
-        List<dynamic> data = jsonDecode(response.body);
-        return data.map((item) => Product.fromJson(item)).toList();
+        final List<dynamic> data = jsonDecode(response.body);
+
+        return data.map((categoryName) {
+          return Category(
+            id: categoryName,
+            name: categoryName,
+          );
+        }).toList();
       } else {
-        // If the server did not return a 200 OK response, throw an exception
-        throw Exception('Failed to load products');
+        throw Exception('Failed to fetch categories: ${response.reasonPhrase}');
       }
     } catch (e) {
-      // Catch any errors that occur during the HTTP request
-      print('Error fetching products: $e');
-      throw Exception('Error fetching products: $e');
+      print('Error in fetchCategories: $e');
+      rethrow;
     }
   }
 
-  // Search products by query (you can extend this further based on category)
-  Future<List<Product>> searchProducts(String query) async {
+  // Fetch all products
+  Future<List<Product>> fetchProducts() async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl?title_like=$query'));
+      final response = await http.get(Uri.parse(productBaseUrl));
 
       if (response.statusCode == 200) {
-        // If the response is successful, parse the data
-        List<dynamic> data = json.decode(response.body);
-        return data.map((item) => Product.fromJson(item)).toList();
+        final List<dynamic> data = jsonDecode(response.body);
+
+        return data.map((productJson) => Product.fromJson(productJson)).toList();
       } else {
-        // If the server did not return a 200 OK response, throw an exception
-        throw Exception('Failed to search products');
+        throw Exception('Failed to fetch products: ${response.reasonPhrase}');
       }
     } catch (e) {
-      // Catch any errors that occur during the HTTP request
-      print('Error searching products: $e');
-      throw Exception('Error searching products: $e');
+      print('Error in fetchProducts: $e');
+      rethrow;
+    }
+  }
+
+  // Fetch products by category
+  Future<List<Product>> fetchProductsByCategory(String category) async {
+    try {
+      final url = '$productBaseUrl/category/$category';
+      print('Fetching products from URL: $url');
+      final response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+
+        return data.map((productJson) => Product.fromJson(productJson)).toList();
+      } else {
+        throw Exception('Failed to fetch products for category "$category": ${response.reasonPhrase}');
+      }
+    } catch (e) {
+      print('Error in fetchProductsByCategory: $e');
+      rethrow;
+    }
+  }
+
+  // Search products by query (if supported by the API)
+  Future<List<Product>> searchProducts(String query) async {
+    try {
+      final url = '$productBaseUrl?title=$query'; // Mock API endpoint for search
+      final response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+
+        return data.map((productJson) => Product.fromJson(productJson)).toList();
+      } else {
+        throw Exception('Failed to search products: ${response.reasonPhrase}');
+      }
+    } catch (e) {
+      print('Error in searchProducts: $e');
+      rethrow;
     }
   }
 }
