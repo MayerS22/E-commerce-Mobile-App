@@ -68,22 +68,26 @@ class ApiService {
     }
   }
 
-  // Search products by query (if supported by the API)
+  // Search products by query
   Future<List<Product>> searchProducts(String query) async {
     try {
-      final url = '$productBaseUrl?title=$query'; // Mock API endpoint for search
-      final response = await http.get(Uri.parse(url));
-
+      final response = await http.get(Uri.parse(productBaseUrl));
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
 
-        return data.map((productJson) => Product.fromJson(productJson)).toList();
+        // Apply search filtering to only include products whose title matches the query
+        return data
+            .map((productJson) => Product.fromJson(productJson))
+            .where((product) => product.title.toLowerCase().contains(query.toLowerCase()))
+            .toList();
       } else {
-        throw Exception('Failed to search products: ${response.reasonPhrase}');
+        throw Exception('Failed to fetch products: ${response.reasonPhrase}');
       }
     } catch (e) {
       print('Error in searchProducts: $e');
       rethrow;
     }
   }
+
+
 }

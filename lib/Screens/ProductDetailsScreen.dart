@@ -106,7 +106,7 @@ class ProductDetailsScreen extends StatelessWidget {
                   // Null-aware operator to handle missing rating
                   Text(
                     product.rating != null
-                        ? '${product.rating?['rate'] ?? 'N/A'} (${product.rating?['count'] ?? 0} reviews)'
+                        ? '${product.ratingRate} (${product.ratingCount} reviews)'
                         : 'No ratings available',
                     style: TextStyle(fontSize: 16, color: Colors.grey),
                   ),

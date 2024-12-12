@@ -1,23 +1,146 @@
 import 'package:flutter/material.dart';
-import 'CategoryListScreen.dart';
+import 'package:e_commerce/Screens/ProductDetailsScreen.dart';
+import 'package:e_commerce/components/discountBanner.dart';
+import 'package:e_commerce/components/CustomSearchBar.dart';
+import 'package:e_commerce/components/SearchResultScreen.dart';
+import 'package:e_commerce/Screens/CategoryListScreen.dart';
+import '../Services/Api-Service.dart';
+import '../components/PopularProducts.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
+  @override
+  _HomeScreenState createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  // Function for search query handling
+  void onSearch(String query) async {
+    try {
+      final results = await ApiService().searchProducts(query);
+      if (mounted) {  // Check if the widget is still in the widget tree
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SearchResultScreen(results: results),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {  // Ensure no updates are made after the widget is disposed
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to fetch search results.')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Home'),
+        title: const Text('Home', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24,color: Colors.white)),
+        centerTitle: true,
+        elevation: 0,
+        backgroundColor: const Color(0xFF4A4E69), // Same as the SignUp button color
       ),
-      body: Center(
-        child: ElevatedButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => CategoryListScreen()),
-            );
-          },
-          child: const Text('View Categories'),
-        ),
+      body: Stack(
+        children: [
+          // Gradient Background (same as SignInScreen)
+          Container(
+            height: double.infinity,
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(colors: [
+                Color(0xFF22223B),
+                Color(0xFF4A4E69),
+                Color(0xFF9A8C98),
+                Color(0xFFC9ADA7),
+                Color(0xFFF2E9E4),
+              ]),
+            ),
+          ),
+          SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0), // Padding for the content
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Custom Search Bar at the top
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 20), // Adding space above and below the search bar
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white, // Background color of the search bar
+                        borderRadius: BorderRadius.circular(12), // Rounded corners
+                        boxShadow: [  // Subtle shadow for depth
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.2),
+                            blurRadius: 6,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: CustomSearchBar(
+                        onSearch: onSearch,
+                      ),
+                    ),
+                  ),
+
+                  // Discount Banner with spacing
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 20),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.orangeAccent.withOpacity(0.1), // Light background color
+                        borderRadius: BorderRadius.circular(10), // Rounded corners for the banner
+                      ),
+                      child: Discount(),
+                    ),
+                  ),
+
+                  // Popular Products Carousel
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 20),
+                    child: PopularProducts(
+                      apiUrl: 'https://fakestoreapi.com/products',  // Sample API URL
+                      itemCount: 1,  // Display 1 product per slide
+                      autoPlay: true,  // Enable auto-play for carousel
+                    ),
+                  ),
+
+                  // View Categories Button (styled like the sign-up button)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    child: Container(
+                      height: 60, // Increased button height
+                      width: 250, // Adjust width to make it more prominent
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => CategoryListScreen()),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          backgroundColor: const Color(0xFF4A4E69), // Same color as the SignUp button
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15), // Rounded corners
+                          ),
+                          minimumSize: Size(double.infinity, 50), // Full-width button
+                        ),
+                        child: const Text(
+                          'View Categories',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

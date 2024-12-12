@@ -1,6 +1,6 @@
-import 'package:e_commerce/Models/Product.dart';
 import 'package:flutter/material.dart';
-import '../Screens/ProductDetailsScreen.dart';
+import 'package:e_commerce/Models/Product.dart';
+import '../Screens/ProductDetailsScreen.dart'; // Assuming you have a ProductDetailsScreen to navigate to
 
 class ProductCard extends StatelessWidget {
   final Product product;
@@ -27,17 +27,17 @@ class ProductCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Product Image (Reduced Height)
+            // Product Image
             ClipRRect(
               borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
               child: Image.network(
                 product.image,
-                height: 120.0, // Reduced height from 200 to 120
+                height: 180.0, // Slightly higher image to match old design
                 width: double.infinity,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
                   return Container(
-                    height: 120.0,
+                    height: 180.0,
                     width: double.infinity,
                     color: Colors.grey.shade300,
                     child: Icon(
@@ -49,7 +49,7 @@ class ProductCard extends StatelessWidget {
                 },
               ),
             ),
-            // Product Details (Title, Price, and Rating)
+            // Product Details (Title, Price)
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Column(
@@ -62,41 +62,18 @@ class ProductCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      fontSize: 14,
+                      fontSize: 16,
                     ),
                   ),
                   SizedBox(height: 8),
-                  // Product Price and Rating (side by side)
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Product Price
-                      Text(
-                        '\$${product.price.toStringAsFixed(2)}',
-                        style: TextStyle(
-                          color: Colors.green,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      // Product Rating
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.star,
-                            color: Colors.yellow,
-                            size: 16,
-                          ),
-                          SizedBox(width: 4),
-                          Text(
-                            product.rating != null
-                                ? '${product.ratingRate}'
-                                : 'No rating',
-                            style: TextStyle(fontSize: 14, color: Colors.grey),
-                          ),
-                        ],
-                      ),
-                    ],
+                  // Product Price
+                  Text(
+                    '\$${product.price.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      color: Colors.green,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               ),

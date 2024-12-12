@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:e_commerce/Models/Product.dart';
-
 import '../Services/Api-Service.dart';
+import '../components/product_card.dart';
 
 class ProductListScreen extends StatefulWidget {
   final String categoryId;
@@ -50,11 +50,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
         itemCount: products.length,
         itemBuilder: (context, index) {
           final product = products[index];
-          return ListTile(
-            title: Text(product.title),
-            subtitle: Text('\$${product.price.toStringAsFixed(2)}'),
-            leading: Image.network(product.image, width: 50, height: 50),
-          );
+          return ProductCard(product: product);
         },
       ),
     );
