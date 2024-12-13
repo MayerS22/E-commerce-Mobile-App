@@ -15,20 +15,6 @@ class CartItem {
     required this.quantity,
   });
 
-  // Factory constructor to create CartItem from Firestore document
-  factory CartItem.fromFirestore(DocumentSnapshot doc) {
-    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-
-    return CartItem(
-      productId: data['productId'] ?? '',
-      title: data['title'] ?? 'Unknown Product',
-      price: (data['price'] as num?)?.toDouble() ?? 0.0,
-      image: data['image'] ?? '',
-      quantity: data['quantity'] is int ? data['quantity'] : 1,
-    );
-  }
-
-  // Method to convert CartItem to a map (for storing in Firestore)
   Map<String, dynamic> toMap() {
     return {
       'productId': productId,
@@ -37,5 +23,16 @@ class CartItem {
       'image': image,
       'quantity': quantity,
     };
+  }
+
+  static CartItem fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return CartItem(
+      productId: data['productId'],
+      title: data['title'],
+      price: data['price'],
+      image: data['image'],
+      quantity: data['quantity'],
+    );
   }
 }

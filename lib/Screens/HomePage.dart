@@ -4,8 +4,10 @@ import 'package:e_commerce/components/CustomSearchBar.dart';
 import 'package:e_commerce/components/SearchResultScreen.dart';
 import 'package:e_commerce/Screens/CategoryListScreen.dart';
 import 'package:e_commerce/Screens/CartScreen.dart'; // Import the Cart Screen
+import 'package:e_commerce/Screens/SignInScreen.dart'; // Import SignIn screen
 import '../Services/Api-Service.dart';
 import '../components/PopularProducts.dart';
+import '../Screens/ProfileScreen.dart'; // Import Profile screen
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -34,6 +36,44 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // Logout function to handle the logout action
+  void _logout() async {
+    // You can use any logout logic like clearing the session, token, or user data
+    // For now, let's just navigate to the SignIn screen.
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => SignInScreen()),
+    );
+  }
+
+  // Show confirmation dialog for logout
+  void _showLogoutDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Log out'),
+          content: const Text('Are you sure you want to log out?'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                _logout(); // Perform logout and navigate to SignIn
+              },
+              child: const Text('Yes'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -45,7 +85,7 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           // Cart icon button in the AppBar
           IconButton(
-            icon: Icon(Icons.shopping_cart,color: Colors.white,),
+            icon: Icon(Icons.shopping_cart, color: Colors.white),
             onPressed: () {
               // Navigate to Cart screen
               Navigator.push(
@@ -53,6 +93,24 @@ class _HomeScreenState extends State<HomeScreen> {
                 MaterialPageRoute(builder: (context) => CartScreen()), // Navigate to Cart Screen
               );
             },
+          ),
+
+          // Profile icon button in the AppBar
+          IconButton(
+            icon: Icon(Icons.person, color: Colors.white),
+            onPressed: () {
+              // Navigate to Profile screen
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ProfileScreen()),
+              );
+            },
+          ),
+
+          // Logout icon button in the AppBar
+          IconButton(
+            icon: Icon(Icons.exit_to_app, color: Colors.white),
+            onPressed: _showLogoutDialog, // Show logout confirmation dialog
           ),
         ],
       ),

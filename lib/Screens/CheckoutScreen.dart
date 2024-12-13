@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../Models/Cart.dart';
 
 class CheckoutScreen extends StatelessWidget {
@@ -35,10 +37,8 @@ class CheckoutScreen extends StatelessWidget {
             Text('Total: \$${totalPrice.toStringAsFixed(2)}', style: TextStyle(fontSize: 20)),
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () {
-                // Logic to clear the cart and save order data
-                _saveOrderData();
-                Navigator.of(context).popUntil((route) => route.isFirst); // Go back to the main screen
+              onPressed: () async {
+                await _confirmOrder(context);
               },
               child: Text('Confirm Order'),
               style: ElevatedButton.styleFrom(minimumSize: Size(double.infinity, 50)),
@@ -49,9 +49,39 @@ class CheckoutScreen extends StatelessWidget {
     );
   }
 
-  void _saveOrderData() {
-    // Save order data to the database
-    print('Order data saved.');
-    // Add logic to save to Firestore or any backend.
+  Future<void> _confirmOrder(BuildContext context) async {
+    final FirebaseFirestore firestore = FirebaseFirestore.instance;
+    final FirebaseAuth auth = FirebaseAuth.instance;
+    final User? user = auth.currentUser;
+
+    if (user != null) {
+      try {
+        // Save the order to Firestore
+        await firestore.collection('orders').add({
+          'userId': user.uid,
+          'items': cartItems.map((item) => item.toMap()).toList(),
+          'totalPrice': totalPrice,
+          'timestamp': Timestamp.now(),
+        });
+
+        // Clear the cart in Firestore
+        final cartCollection = firestore.collection('carts').doc(user.uid).collection('items');
+        final cartSnapshot = await cartCollection.get();
+        for (var doc in cartSnapshot.docs) {
+          await doc.reference.delete();
+        }
+
+        // Show confirmation message
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Order confirmed! It will be shipped soon.')));
+
+        // Navigate back to the main screen
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      } catch (e) {
+        print('Error confirming order: $e');
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to confirm the order.')));
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('User is not authenticated.')));
+    }
   }
 }

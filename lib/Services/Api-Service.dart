@@ -2,8 +2,9 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:e_commerce/Models/Product.dart';
-import 'package:e_commerce/Models/Category.dart';
+import '../Models/Product.dart';
+import '../Models/Category.dart';
+import '../Models/UserProfile.dart';
 import '../Models/Cart.dart';
 
 class ApiService {
@@ -12,11 +13,50 @@ class ApiService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
+  // ---------------------------------------------
+  // Profile Operations
+  // ---------------------------------------------
+
+  // Fetch user profile data
+  // Fetch user profile data or create a new profile if it doesn't exist
+  Future<UserProfile?> getUserProfile() async {
+    final user = _auth.currentUser;
+    if (user != null) {
+      final doc = await _firestore.collection('profiles').doc(user.uid).get();
+      if (doc.exists) {
+        return UserProfile.fromFirestore(doc);
+      } else {
+        // If no profile exists, create a default one
+        final newUserProfile = UserProfile(
+          name: user.displayName ?? 'User', // Default value if no displayName
+          email: user.email ?? 'email@example.com',
+          birthday: DateTime.now(), // Default birthday
+        );
+        // Save the new profile in Firestore
+        await _firestore.collection('profiles').doc(user.uid).set(newUserProfile.toMap());
+        return newUserProfile;
+      }
+    }
+    return null;
+  }
+
+
+  // Save or update user profile data
+  Future<void> saveUserProfile(UserProfile profile) async {
+    final user = _auth.currentUser;
+    if (user != null) {
+      await _firestore.collection('profiles').doc(user.uid).set(profile.toMap());
+    }
+  }
+
+  // ---------------------------------------------
+  // Category Operations
+  // ---------------------------------------------
+
   // Fetch all categories
   Future<List<Category>> fetchCategories() async {
     try {
       final response = await http.get(Uri.parse(categoryBaseUrl));
-
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
 
@@ -35,11 +75,14 @@ class ApiService {
     }
   }
 
+  // ---------------------------------------------
+  // Product Operations
+  // ---------------------------------------------
+
   // Fetch all products
   Future<List<Product>> fetchProducts() async {
     try {
       final response = await http.get(Uri.parse(productBaseUrl));
-
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
 
@@ -58,7 +101,6 @@ class ApiService {
     try {
       final url = '$productBaseUrl/category/$category';
       final response = await http.get(Uri.parse(url));
-
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
 
@@ -92,7 +134,9 @@ class ApiService {
     }
   }
 
+  // ---------------------------------------------
   // Cart Operations
+  // ---------------------------------------------
 
   // Add item to the cart
   Future<void> addToCart(Product product) async {
@@ -147,7 +191,12 @@ class ApiService {
     User? user = _auth.currentUser;
     if (user != null) {
       try {
-        await _firestore.collection('carts').doc(user.uid).collection('items').doc(productId).update({'quantity': quantity});
+        await _firestore
+            .collection('carts')
+            .doc(user.uid)
+            .collection('items')
+            .doc(productId)
+            .update({'quantity': quantity});
       } catch (e) {
         print("Error updating quantity: $e");
       }
