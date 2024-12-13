@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:e_commerce/Screens/ProductDetailsScreen.dart';
 import 'package:e_commerce/components/discountBanner.dart';
 import 'package:e_commerce/components/CustomSearchBar.dart';
 import 'package:e_commerce/components/SearchResultScreen.dart';
 import 'package:e_commerce/Screens/CategoryListScreen.dart';
+import 'package:e_commerce/Screens/CartScreen.dart'; // Import the Cart Screen
 import '../Services/Api-Service.dart';
 import '../components/PopularProducts.dart';
 
@@ -39,9 +39,22 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Home', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24,color: Colors.white)),
-        centerTitle: true,
+        centerTitle: false,
         elevation: 0,
         backgroundColor: const Color(0xFF4A4E69), // Same as the SignUp button color
+        actions: [
+          // Cart icon button in the AppBar
+          IconButton(
+            icon: Icon(Icons.shopping_cart,color: Colors.white,),
+            onPressed: () {
+              // Navigate to Cart screen
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => CartScreen()), // Navigate to Cart Screen
+              );
+            },
+          ),
+        ],
       ),
       body: Stack(
         children: [
