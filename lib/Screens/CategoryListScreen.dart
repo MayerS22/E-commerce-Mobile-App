@@ -24,10 +24,12 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
       setState(() {
         categories = fetchedCategories;
       });
+      print(fetchedCategories);  // Check what is being fetched
     } catch (e) {
       print("Error fetching categories: $e");
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

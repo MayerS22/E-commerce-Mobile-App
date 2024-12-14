@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'HomePage.dart';
+import 'AdminDashboardScreen.dart';
 import 'SignUpScreen.dart';
 
 class SignInScreen extends StatefulWidget {
@@ -12,8 +13,8 @@ class SignInScreen extends StatefulWidget {
 }
 
 class _SignInScreenState extends State<SignInScreen> {
-  TextEditingController emailcontroller = TextEditingController();
-  TextEditingController passcontroller = TextEditingController();
+  TextEditingController emailController = TextEditingController();
+  TextEditingController passwordController = TextEditingController();
   final GlobalKey<FormState> formKey = GlobalKey();
   bool _isPasswordVisible = false;
   bool _rememberMe = false; // Remember me flag
@@ -32,8 +33,8 @@ class _SignInScreenState extends State<SignInScreen> {
       String? savedEmail = prefs.getString('email');
       String? savedPassword = prefs.getString('password');
       if (savedEmail != null && savedPassword != null) {
-        emailcontroller.text = savedEmail;
-        passcontroller.text = savedPassword;
+        emailController.text = savedEmail;
+        passwordController.text = savedPassword;
         _rememberMe = true;
       }
     }
@@ -45,12 +46,131 @@ class _SignInScreenState extends State<SignInScreen> {
     final prefs = await SharedPreferences.getInstance();
     if (_rememberMe) {
       prefs.setBool('rememberMe', true);
-      prefs.setString('email', emailcontroller.text.trim());
-      prefs.setString('password', passcontroller.text.trim());
+      prefs.setString('email', emailController.text.trim());
+      prefs.setString('password', passwordController.text.trim());
     } else {
       prefs.setBool('rememberMe', false);
       prefs.remove('email');
       prefs.remove('password');
+    }
+  }
+
+  // Sign in logic
+  void signin() async {
+    if (formKey.currentState!.validate()) {
+      showDialog(
+        context: context,
+        builder: (context) {
+          return const Center(child: CircularProgressIndicator());
+        },
+      );
+
+      try {
+        // Sign in with Firebase Auth
+        await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: emailController.text.trim(),
+          password: passwordController.text.trim(),
+        );
+
+        // Save credentials if "Remember Me" is selected
+        _saveCredentials();
+
+        // Check if the email belongs to an admin
+        if (emailController.text.trim() == 'admin1@gmail.com' || emailController.text.trim() == 'admin2@gmail.com') {
+          Navigator.pop(context);
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => AdminDashboardScreen()),
+          );
+        } else {
+          Navigator.pop(context);
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => HomeScreen()),
+          );
+        }
+      } on FirebaseAuthException catch (e) {
+        Navigator.pop(context);
+
+        String message = '';
+        switch (e.code) {
+          case 'user-not-found':
+            message = 'No user found for this email.';
+            break;
+          case 'wrong-password':
+            message = 'Incorrect password.';
+            break;
+          default:
+            message = 'An error occurred. Please try again.';
+        }
+
+        showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text('Error'),
+              content: Text(message),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK')),
+              ],
+            );
+          },
+        );
+      }
+    }
+  }
+
+  // Forgot password logic
+  Future<void> _forgotPassword() async {
+    String email = emailController.text.trim();
+
+    if (email.isEmpty) {
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text("Error"),
+            content: const Text("Please enter your email address."),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context), child: const Text("OK")),
+            ],
+          );
+        },
+      );
+      return;
+    }
+
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text("Password Reset"),
+            content: const Text("Password reset email sent! Check your inbox."),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context), child: const Text("OK")),
+            ],
+          );
+        },
+      );
+    } on FirebaseAuthException catch (e) {
+      String message = e.code == 'user-not-found'
+          ? 'No user found for this email address.'
+          : 'An error occurred. Please try again.';
+
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text("Error"),
+            content: Text(message),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context), child: const Text("OK")),
+            ],
+          );
+        },
+      );
     }
   }
 
@@ -127,7 +247,7 @@ class _SignInScreenState extends State<SignInScreen> {
                             }
                             return null;
                           },
-                          controller: emailcontroller,
+                          controller: emailController,
                           decoration: InputDecoration(
                             prefixIcon: const Icon(Icons.email, color: Color(0xFF22223B)),
                             border: OutlineInputBorder(
@@ -147,7 +267,7 @@ class _SignInScreenState extends State<SignInScreen> {
                             }
                             return null;
                           },
-                          controller: passcontroller,
+                          controller: passwordController,
                           obscureText: !_isPasswordVisible,
                           decoration: InputDecoration(
                             prefixIcon: const Icon(Icons.lock, color: Color(0xFF22223B)),
@@ -200,7 +320,7 @@ class _SignInScreenState extends State<SignInScreen> {
                             ),
                             child: const Text(
                               "Sign In",
-                              style: TextStyle(fontWeight: FontWeight.bold,color: Colors.white),
+                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
                             ),
                           ),
                         ),
@@ -242,108 +362,5 @@ class _SignInScreenState extends State<SignInScreen> {
         ],
       ),
     );
-  }
-
-  void signin() async {
-    if (formKey.currentState!.validate()) {
-      showDialog(
-        context: context,
-        builder: (context) {
-          return const Center(child: CircularProgressIndicator());
-        },
-      );
-
-      try {
-        await FirebaseAuth.instance.signInWithEmailAndPassword(
-          email: emailcontroller.text.trim(),
-          password: passcontroller.text.trim(),
-        );
-
-        _saveCredentials();
-
-        Navigator.pop(context);
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => HomeScreen()));
-      } on FirebaseAuthException catch (e) {
-        Navigator.pop(context);
-
-        String message = '';
-        switch (e.code) {
-          case 'user-not-found':
-            message = 'No user found for this email.';
-            break;
-          case 'wrong-password':
-            message = 'Incorrect password.';
-            break;
-          default:
-            message = 'An error occurred. Please try again.';
-        }
-
-        showDialog(
-          context: context,
-          builder: (context) {
-            return AlertDialog(
-              title: const Text('Error'),
-              content: Text(message),
-              actions: [
-                TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK')),
-              ],
-            );
-          },
-        );
-      }
-    }
-  }
-
-  Future<void> _forgotPassword() async {
-    String email = emailcontroller.text.trim();
-
-    if (email.isEmpty) {
-      showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: const Text("Error"),
-            content: const Text("Please enter your email address."),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(context), child: const Text("OK")),
-            ],
-          );
-        },
-      );
-      return;
-    }
-
-    try {
-      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
-      showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: const Text("Password Reset"),
-            content: const Text("Password reset email sent! Check your inbox."),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(context), child: const Text("OK")),
-            ],
-          );
-        },
-      );
-    } on FirebaseAuthException catch (e) {
-      String message = e.code == 'user-not-found'
-          ? 'No user found for this email address.'
-          : 'An error occurred. Please try again.';
-
-      showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: const Text("Error"),
-            content: Text(message),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(context), child: const Text("OK")),
-            ],
-          );
-        },
-      );
-    }
   }
 }

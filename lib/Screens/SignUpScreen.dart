@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';  // For date formatting
 import 'SignInScreen.dart'; // Make sure to import the SignInScreen
+import '../Models/UserProfile.dart'; // Make sure to import the UserProfile model
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -14,6 +17,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   TextEditingController passcontroller = TextEditingController();
   TextEditingController confirmpasscontroller = TextEditingController();
   TextEditingController namecontroller = TextEditingController();
+  TextEditingController birthdaycontroller = TextEditingController();
   final GlobalKey<FormState> formKey = GlobalKey();
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
@@ -99,6 +103,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           },
                         ),
                         const SizedBox(height: 20),
+                        // Add Birthday Field
+                        _buildTextField(
+                          controller: birthdaycontroller,
+                          label: "Birthday",
+                          hint: "Enter your birthday (DD-MM-YYYY)",
+                          icon: Icons.calendar_today,
+                          validator: (value) {
+                            if (value!.isEmpty) return "Birthday must not be null";
+                            try {
+                              DateFormat('dd-MM-yyyy').parse(value);
+                            } catch (_) {
+                              return "Please enter a valid date in DD-MM-YYYY format";
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 20),
                         _buildTextField(
                           controller: passcontroller,
                           label: "Password",
@@ -150,7 +171,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             onPressed: signup,
                             child: const Text(
                               "Register Account",
-                              style: TextStyle(fontWeight: FontWeight.w700,color: Colors.white),
+                              style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
                             ),
                           ),
                         ),
@@ -227,6 +248,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   void signup() async {
     if (formKey.currentState!.validate()) {
+      // Show loading dialog
       showDialog(
         context: context,
         builder: (context) {
@@ -237,18 +259,39 @@ class _SignUpScreenState extends State<SignUpScreen> {
       );
 
       try {
-        await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        // Create user with Firebase
+        UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
           email: emailcontroller.text.trim(),
           password: passcontroller.text.trim(),
         );
 
-        Navigator.pop(context); // Dismiss loading dialog
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const SignInScreen()),
+        // Get the user UID
+        String uid = userCredential.user!.uid;
+
+        // Create UserProfile object
+        final userProfile = UserProfile(
+          name: namecontroller.text,
+          email: emailcontroller.text,
+          birthday: DateFormat('dd-MM-yyyy').parse(birthdaycontroller.text),
         );
+
+        // Save userProfile in Firestore
+        await saveUserProfile(uid, userProfile);
+
+        // Dismiss the loading dialog
+        Navigator.pop(context);
+
+        // Navigate to SignInScreen after a short delay
+        Future.delayed(const Duration(milliseconds: 500), () {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const SignInScreen()),
+          );
+        });
       } on FirebaseAuthException catch (e) {
-        Navigator.pop(context); // Close the dialog
+        // Close the loading dialog
+        Navigator.pop(context);
+
         String message = '';
         switch (e.code) {
           case 'email-already-in-use':
@@ -260,10 +303,31 @@ class _SignUpScreenState extends State<SignUpScreen> {
           default:
             message = "An error occurred. Please try again.";
         }
+
+        // Show error message using a SnackBar
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(message)),
         );
       }
     }
   }
+
+
+  // Method to save UserProfile in Firestore (or any other backend)
+
+
+  Future<void> saveUserProfile(String uid, UserProfile userProfile) async {
+    try {
+      // Get Firestore instance
+      final firestore = FirebaseFirestore.instance;
+
+      // Save the user profile in Firestore under the 'users' collection
+      await firestore.collection('users').doc(uid).set(userProfile.toMap());
+
+      print("User profile saved successfully!");
+    } catch (e) {
+      print("Error saving user profile: $e");
+    }
+  }
+
 }

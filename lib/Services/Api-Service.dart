@@ -17,35 +17,45 @@ class ApiService {
   // Profile Operations
   // ---------------------------------------------
 
-  // Fetch user profile data
-  // Fetch user profile data or create a new profile if it doesn't exist
+// Fetch user profile data or create a new profile if it doesn't exist
   Future<UserProfile?> getUserProfile() async {
     final user = _auth.currentUser;
     if (user != null) {
-      final doc = await _firestore.collection('profiles').doc(user.uid).get();
-      if (doc.exists) {
-        return UserProfile.fromFirestore(doc);
-      } else {
-        // If no profile exists, create a default one
-        final newUserProfile = UserProfile(
-          name: user.displayName ?? 'User', // Default value if no displayName
-          email: user.email ?? 'email@example.com',
-          birthday: DateTime.now(), // Default birthday
-        );
-        // Save the new profile in Firestore
-        await _firestore.collection('profiles').doc(user.uid).set(newUserProfile.toMap());
-        return newUserProfile;
+      try {
+        // Fetch data from the 'users' collection
+        final doc = await _firestore.collection('users').doc(user.uid).get();
+        if (doc.exists) {
+          // Map the Firestore document to a UserProfile object
+          return UserProfile.fromFirestore(doc);
+        } else {
+          // If the document doesn't exist, create a new user profile with fallback data
+          final newUserProfile = UserProfile(
+            name: user.displayName ?? 'User', // Fallback name
+            email: user.email ?? 'email@example.com', // Fallback email
+            birthday: DateTime.now(), // Fallback birthday
+          );
+
+          // Save the new user profile to the 'users' collection
+          await _firestore.collection('users').doc(user.uid).set(newUserProfile.toMap());
+
+          return newUserProfile;
+        }
+      } catch (e) {
+        print('Error fetching or saving user profile: $e');
+        return null;
       }
+    } else {
+      print("No user is currently authenticated.");
+      return null;
     }
-    return null;
   }
 
-
-  // Save or update user profile data
+// Save or update user profile data in the 'users' collection
   Future<void> saveUserProfile(UserProfile profile) async {
     final user = _auth.currentUser;
     if (user != null) {
-      await _firestore.collection('profiles').doc(user.uid).set(profile.toMap());
+      // Save the updated profile to the 'users' collection
+      await _firestore.collection('users').doc(user.uid).set(profile.toMap());
     }
   }
 
@@ -59,7 +69,6 @@ class ApiService {
       final response = await http.get(Uri.parse(categoryBaseUrl));
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
-
         return data.map((categoryName) {
           return Category(
             id: categoryName,
@@ -74,6 +83,7 @@ class ApiService {
       rethrow;
     }
   }
+
 
   // ---------------------------------------------
   // Product Operations
@@ -234,4 +244,220 @@ class ApiService {
     }
     return total;
   }
+  // Fetch all user profiles
+  Future<List<UserProfile>> fetchAllUsers() async {
+    try {
+      // Note: To get a list of users, you typically need to use Firebase Admin SDK or a backend service.
+      // Here, we can only fetch the current user for the Flutter app:
+      List<UserProfile> users = [];
+
+      final currentUser = _auth.currentUser;
+      if (currentUser != null) {
+        users.add(
+          UserProfile(
+            name: currentUser.displayName ?? 'Unknown',
+            email: currentUser.email ?? 'No email',
+            birthday: DateTime.now(), // Default for this example
+          ),
+        );
+      }
+
+      return users;
+    } catch (e) {
+      print('Error fetching users from Firebase Authentication: $e');
+      return [];
+    }
+  }
+
+  Future<void> deleteUser(String email) async {
+    try {
+      // First, delete the user profile from Firestore
+      final userProfiles = await _firestore
+          .collection('profiles')
+          .where('email', isEqualTo: email)
+          .get();
+
+      if (userProfiles.docs.isNotEmpty) {
+        // If user profile exists, delete it from Firestore
+        for (var profile in userProfiles.docs) {
+          await profile.reference.delete();
+        }
+      }
+
+      // Then, delete the user from Firebase Authentication
+      final user = await _auth.fetchSignInMethodsForEmail(email);
+      if (user.isNotEmpty) {
+        final authUser = _auth.currentUser;
+        if (authUser != null && authUser.email == email) {
+          // If the user is logged in, delete them
+          await authUser.delete();
+        } else {
+          // Otherwise, delete the user from Firebase Authentication
+          await _auth.currentUser!.delete();
+        }
+      }
+    } catch (e) {
+      throw 'Error deleting user: $e';
+    }
+  }
+
+
+  // Add user to Firebase Authentication and Firestore
+  Future<void> addUser(String email, String password, String name) async {
+    try {
+      // Create user in Firebase Authentication
+      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      // Create user profile in Firestore
+      final newUserProfile = UserProfile(
+        name: name,
+        email: email,
+        birthday: DateTime.now(), // Default birthday (can be updated later)
+      );
+
+      await _firestore.collection('profiles').doc(userCredential.user!.uid).set(newUserProfile.toMap());
+
+      print('User created and added to Firestore');
+    } catch (e) {
+      print('Error adding user: $e');
+    }
+  }
+
+
+
+//create category
+  Future<void> createCategory(String categoryName) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$categoryBaseUrl'),
+        body: {'name': categoryName},
+      );
+      if (response.statusCode == 201) {
+        print("Category created successfully");
+
+        // After creating, refresh the categories list
+        fetchCategories(); // This will refetch the categories and update the UI
+      } else {
+        print("Error: ${response.body}");
+      }
+    } catch (e) {
+      print("API error: $e");
+    }
+  }
+
+// Update category
+  Future<void> updateCategory(String id, String newName) async {
+    final response = await http.put(
+      Uri.parse('$categoryBaseUrl/$id'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({'name': newName}),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update category');
+    }
+  }
+
+
+// Delete category
+  Future<void> deleteCategory(String categoryId) async {
+    try {
+      final url = Uri.parse('$categoryBaseUrl/$categoryId');
+      final response = await http.delete(url);
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        // Refetch categories after successful deletion
+        await fetchCategories();
+        print('Category with ID $categoryId deleted successfully.');
+      } else {
+        throw Exception('Failed to delete category. Error: ${response.body}');
+      }
+    } catch (e) {
+      print('Error while deleting category: $e');
+      throw Exception('Error while deleting category: $e');
+    }
+  }
+
+  //create product
+  Future<void> createProduct(String productName, double productPrice) async {
+    final response = await http.post(
+      Uri.parse('$productBaseUrl'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'title': productName,
+        'price': productPrice,
+      }),
+    );
+
+    if (response.statusCode != 201) {
+      throw Exception('Failed to create product');
+    }
+  }
+// Update product
+  Future<void> updateProduct(String id, String title, double price) async {
+    final response = await http.put(
+      Uri.parse('$productBaseUrl/$id'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({'title': title, 'price': price}),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update product');
+    }
+  }
+//update product
+  Future<void> deleteProduct(String id) async {
+    final response = await http.delete(
+      Uri.parse('$productBaseUrl/$id'),
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete product');
+    }
+  }
+// Fetch best-selling products based on order quantity
+  Future<List<Map<String, dynamic>>> getBestSellingProducts() async {
+    try {
+      // Fetch all orders
+      QuerySnapshot ordersSnapshot = await _firestore.collection('orders').get();
+
+      // Create a map to store aggregated product sales
+      Map<String, int> productSales = {};
+
+      // Loop through each order and aggregate product quantities
+      for (var order in ordersSnapshot.docs) {
+        var items = order['items'];
+        for (var item in items) {
+          String productId = item['productId'];
+          int quantity = item['quantity'];
+
+          if (productSales.containsKey(productId)) {
+            productSales[productId] = productSales[productId]! + quantity;
+          } else {
+            productSales[productId] = quantity;
+          }
+        }
+      }
+
+      // Convert the map into a list of product sales for charting
+      List<Map<String, dynamic>> bestSellingProducts = [];
+      productSales.forEach((productId, quantity) {
+        bestSellingProducts.add({'productId': productId, 'quantity': quantity});
+      });
+
+      // Sort by quantity in descending order to get best sellers
+      bestSellingProducts.sort((a, b) => b['quantity'].compareTo(a['quantity']));
+
+      return bestSellingProducts;
+    } catch (e) {
+      print('Error fetching best-selling products: $e');
+      return [];
+    }
+  }
+
+
 }
