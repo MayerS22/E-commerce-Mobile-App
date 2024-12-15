@@ -3,6 +3,9 @@ import 'package:fl_chart/fl_chart.dart'; // Import the fl_chart package
 import '../Models/Product.dart'; // Import your Product model
 import '../Models/Category.dart';
 import '../Services/Api-Service.dart'; // Import your ApiService
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+import 'TransactionReportScreen.dart'; // Firebase Firestore for report
 
 class AdminDashboardScreen extends StatefulWidget {
   @override
@@ -226,6 +229,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
     return Scaffold(
       appBar: AppBar(
         title: Text("Admin Dashboard"),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.report),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => TransactionReportScreen()),
+              );
+            },
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           tabs: [
@@ -385,9 +399,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                             x: int.parse(product['productId']),
                             barRods: [
                               BarChartRodData(
-                                toY: product['quantity'].toDouble(),
+                                toY: product['totalSales'],
                                 color: Colors.blue,
-                                width: 15,
+                                width: 20,
+                                borderRadius: BorderRadius.zero,
                               ),
                             ],
                           );
