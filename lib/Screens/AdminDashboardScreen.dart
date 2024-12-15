@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Auth
 import 'package:fl_chart/fl_chart.dart'; // Import the fl_chart package
 import '../Models/Product.dart'; // Import your Product model
 import '../Models/Category.dart';
 import '../Services/Api-Service.dart'; // Import your ApiService
-import 'package:cloud_firestore/cloud_firestore.dart';
-
-import 'TransactionReportScreen.dart'; // Firebase Firestore for report
+import 'TransactionReportScreen.dart';
+import 'UserFeedbackScreen.dart'; // Firebase Firestore for report
 
 class AdminDashboardScreen extends StatefulWidget {
   @override
@@ -30,6 +31,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  // Method to log out
+  Future<void> _logOut() async {
+    try {
+      await FirebaseAuth.instance.signOut();
+      Navigator.pushReplacementNamed(context, '/login'); // Navigate to login screen
+    } catch (e) {
+      print('Error during logout: $e');
+    }
   }
 
   // Method to create a new category
@@ -84,152 +95,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
     }
   }
 
-  // Method to show the category dialog
-  void _showCategoryDialog({String? initialCategoryName, String? categoryId}) {
-    if (initialCategoryName != null) {
-      _categoryNameController.text = initialCategoryName;
-    }
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(categoryId == null ? 'Add Category' : 'Edit Category'),
-          content: TextField(
-            controller: _categoryNameController,
-            decoration: InputDecoration(labelText: 'Category Name'),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                String categoryName = _categoryNameController.text;
-                if (categoryName.isNotEmpty) {
-                  if (categoryId == null) {
-                    _createCategory(categoryName);
-                  } else {
-                    _updateCategory(categoryId, categoryName);
-                  }
-                  Navigator.pop(context);
-                }
-              },
-              child: Text(categoryId == null ? 'Add' : 'Update'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: Text('Cancel'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  // Method to show the product dialog
-  void _showProductDialog({String? initialProductName, double? initialProductPrice, String? productId}) {
-    if (initialProductName != null) {
-      _productNameController.text = initialProductName;
-    }
-    if (initialProductPrice != null) {
-      _productPriceController.text = initialProductPrice.toString();
-    }
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(productId == null ? 'Create Product' : 'Edit Product'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: _productNameController,
-                decoration: InputDecoration(labelText: 'Product Name'),
-              ),
-              TextField(
-                controller: _productPriceController,
-                decoration: InputDecoration(labelText: 'Product Price'),
-                keyboardType: TextInputType.number,
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                String productName = _productNameController.text;
-                double? productPrice = double.tryParse(_productPriceController.text);
-                if (productName.isNotEmpty && productPrice != null) {
-                  if (productId == null) {
-                    _createProduct(productName, productPrice);
-                  } else {
-                    _updateProduct(productId, productName, productPrice);
-                  }
-                  Navigator.pop(context);
-                }
-              },
-              child: Text(productId == null ? 'Create' : 'Update'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: Text('Cancel'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  // Update Category
-  Future<void> _updateCategory(String categoryId, String newName) async {
-    try {
-      await _apiService.updateCategory(categoryId, newName);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Category updated successfully")));
-      setState(() {});
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to update category: $e")));
-    }
-  }
-
-  // Delete Category
-  Future<void> _deleteCategory(String categoryId) async {
-    try {
-      await _apiService.deleteCategory(categoryId);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Category deleted successfully")));
-      setState(() {});
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to delete category: $e")));
-    }
-  }
-
-  // Update Product
-  Future<void> _updateProduct(String productId, String productName, double productPrice) async {
-    try {
-      await _apiService.updateProduct(productId, productName, productPrice);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Product updated successfully")));
-      setState(() {});
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to update product: $e")));
-    }
-  }
-
-  // Delete Product
-  Future<void> _deleteProduct(String productId) async {
-    try {
-      await _apiService.deleteProduct(productId);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Product deleted successfully")));
-      setState(() {});
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to delete product: $e")));
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text("Admin Dashboard"),
         actions: [
+          // Report Icon
           IconButton(
             icon: Icon(Icons.report),
             onPressed: () {
@@ -238,6 +110,21 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                 MaterialPageRoute(builder: (context) => TransactionReportScreen()),
               );
             },
+          ),
+          // User Feedback Icon
+          IconButton(
+            icon: Icon(Icons.feedback),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => UserFeedbackScreen()), // Navigate to feedback screen
+              );
+            },
+          ),
+          // Logout Icon
+          IconButton(
+            icon: Icon(Icons.exit_to_app), // Log out icon
+            onPressed: _logOut,
           ),
         ],
         bottom: TabBar(
@@ -372,7 +259,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
           // Best-Selling Products Chart Tab
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: FutureBuilder<List<Map<String, dynamic>>>(
+            child: FutureBuilder<List<Map<String, dynamic>>>( // Best-Selling products
               future: _fetchBestSellingProducts(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
@@ -417,5 +304,145 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
         ],
       ),
     );
+  }
+
+  // Method to create or update a category
+  void _showCategoryDialog({String? initialCategoryName, String? categoryId}) {
+    if (initialCategoryName != null) {
+      _categoryNameController.text = initialCategoryName;
+    }
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(categoryId == null ? 'Add Category' : 'Edit Category'),
+          content: TextField(
+            controller: _categoryNameController,
+            decoration: InputDecoration(labelText: 'Category Name'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                String categoryName = _categoryNameController.text;
+                if (categoryName.isNotEmpty) {
+                  if (categoryId == null) {
+                    _createCategory(categoryName);
+                  } else {
+                    _updateCategory(categoryId, categoryName);
+                  }
+                  Navigator.pop(context);
+                }
+              },
+              child: Text(categoryId == null ? 'Add' : 'Update'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Method to update category
+  Future<void> _updateCategory(String categoryId, String newName) async {
+    try {
+      await _apiService.updateCategory(categoryId, newName);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Category updated successfully")));
+      setState(() {});
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to update category: $e")));
+    }
+  }
+
+  // Method to delete category
+  Future<void> _deleteCategory(String categoryId) async {
+    try {
+      await _apiService.deleteCategory(categoryId);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Category deleted successfully")));
+      setState(() {});
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to delete category: $e")));
+    }
+  }
+
+  // Method to create or update a product
+  void _showProductDialog({String? initialProductName, double? initialProductPrice, String? productId}) {
+    if (initialProductName != null) {
+      _productNameController.text = initialProductName;
+    }
+    if (initialProductPrice != null) {
+      _productPriceController.text = initialProductPrice.toString();
+    }
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(productId == null ? 'Add Product' : 'Edit Product'),
+          content: Column(
+            children: [
+              TextField(
+                controller: _productNameController,
+                decoration: InputDecoration(labelText: 'Product Name'),
+              ),
+              TextField(
+                controller: _productPriceController,
+                decoration: InputDecoration(labelText: 'Product Price'),
+                keyboardType: TextInputType.number,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                String productName = _productNameController.text;
+                double productPrice = double.tryParse(_productPriceController.text) ?? 0;
+                if (productName.isNotEmpty && productPrice > 0) {
+                  if (productId == null) {
+                    _createProduct(productName, productPrice);
+                  } else {
+                    _updateProduct(productId, productName, productPrice);
+                  }
+                  Navigator.pop(context);
+                }
+              },
+              child: Text(productId == null ? 'Add' : 'Update'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Method to update product
+  Future<void> _updateProduct(String productId, String productName, double productPrice) async {
+    try {
+      await _apiService.updateProduct(productId, productName, productPrice);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Product updated successfully")));
+      setState(() {});
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to update product: $e")));
+    }
+  }
+
+  // Method to delete product
+  Future<void> _deleteProduct(String productId) async {
+    try {
+      await _apiService.deleteProduct(productId);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Product deleted successfully")));
+      setState(() {});
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to delete product: $e")));
+    }
   }
 }
