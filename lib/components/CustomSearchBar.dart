@@ -22,7 +22,7 @@ class _CustomSearchBarState extends State<CustomSearchBar> {
     super.dispose();
   }
 
-  // Normalize search input by converting to lowercase and trimming spaces
+  // converting to lowercase and trimming spaces
   String _normalizeSearchQuery(String query) {
     // Remove extra spaces and trim leading/trailing spaces
     query = query.trim();

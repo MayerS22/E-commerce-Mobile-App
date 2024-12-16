@@ -29,9 +29,9 @@ class Product {
       price: (json['price'] as num).toDouble(),
       image: json['image'],
       category: json['category'],
-      quantityInStock: json['quantityInStock'] ?? 0, // Parse stock quantity
+      quantityInStock: json['quantityInStock'] ?? 0,
       rating: json['rating'] != null ? Map<String, dynamic>.from(json['rating']) : null,
-      salesCount: json['salesCount'] ?? 0, // Parse sales count
+      salesCount: json['salesCount'] ?? 0, 
     );
   }
 

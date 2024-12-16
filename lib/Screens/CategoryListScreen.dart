@@ -44,7 +44,6 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
           ? const Center(child: CircularProgressIndicator())
           : Stack(
         children: [
-          // Gradient Background (same as HomeScreen)
           Container(
             height: double.infinity,
             width: double.infinity,
@@ -64,19 +63,19 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
               padding: const EdgeInsets.all(10.0),
               child: GridView.builder(
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2, // Two categories per row
+                  crossAxisCount: 2,
                   crossAxisSpacing: 10.0,
                   mainAxisSpacing: 10.0,
-                  childAspectRatio: 1.2, // Adjust aspect ratio for card size
+                  childAspectRatio: 1.2,
                 ),
                 itemCount: categories.length,
-                shrinkWrap: true, // To prevent overflow and allow scrolling
-                physics: NeverScrollableScrollPhysics(), // Disable scroll for grid inside scroll view
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
                 itemBuilder: (context, index) {
                   final category = categories[index];
                   return GestureDetector(
                     onTap: () {
-                      // Navigate to the Product List screen for the selected category
+
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -92,7 +91,7 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
                       ),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: const Color(0xFF4A4E69), // Same color as button
+                          color: const Color(0xFF4A4E69),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Column(

@@ -11,7 +11,6 @@ class ProductCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        // Navigate to Product Details Screen when the card is tapped
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -32,7 +31,7 @@ class ProductCard extends StatelessWidget {
               borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
               child: Image.network(
                 product.image,
-                height: 180.0, // Slightly higher image to match old design
+                height: 180.0,
                 width: double.infinity,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {

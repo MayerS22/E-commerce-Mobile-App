@@ -12,8 +12,8 @@ class SearchResultScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Search Results'),
-        centerTitle: true, // Center the title for a cleaner look
-        backgroundColor: const Color(0xFF4A4E69), // Keep it consistent with your theme
+        centerTitle: true,
+        backgroundColor: const Color(0xFF4A4E69),
       ),
       body: results.isEmpty
           ? Center(
@@ -34,20 +34,20 @@ class SearchResultScreen extends StatelessWidget {
         ),
       )
           : Padding(
-        padding: const EdgeInsets.all(8.0), // Add padding for spacing
+        padding: const EdgeInsets.all(8.0),
         child: GridView.builder(
-          shrinkWrap: true, // Makes GridView take only as much space as its children need
-          physics: AlwaysScrollableScrollPhysics(), // Ensure the grid is always scrollable
+          shrinkWrap: true,
+          physics: AlwaysScrollableScrollPhysics(),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 1, // One product per row
+            crossAxisCount: 1,
             crossAxisSpacing: 10.0,
             mainAxisSpacing: 10.0,
-            childAspectRatio: 1.4, // Adjust aspect ratio for card size
+            childAspectRatio: 1.4,
           ),
           itemCount: results.length,
           itemBuilder: (context, index) {
             final product = results[index];
-            return ProductCard(product: product); // Use ProductCard for a cleaner UI
+            return ProductCard(product: product);
           },
         ),
       ),

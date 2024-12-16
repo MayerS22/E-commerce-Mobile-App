@@ -2,19 +2,19 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:e_commerce/Screens/ProductDetailsScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
-import '../Models/Product.dart';  // Make sure to import the Product model
+import '../Models/Product.dart';
 
 class PopularProducts extends StatefulWidget {
-  final String apiUrl;  // Allow passing a dynamic URL to fetch products
-  final int itemCount;  // Specify how many items per slide
-  final bool autoPlay;  // Option to auto-play the carousel
+  final String apiUrl;
+  final int itemCount;
+  final bool autoPlay;
 
   // Constructor with default values
   const PopularProducts({
     Key? key,
-    this.apiUrl = 'https://fakestoreapi.com/products',  // Default API URL
-    this.itemCount = 2,  // Default 2 products per slide
-    this.autoPlay = true,  // Default auto-play enabled
+    this.apiUrl = 'https://fakestoreapi.com/products',
+    this.itemCount = 1,
+    this.autoPlay = true,
   }) : super(key: key);
 
   @override

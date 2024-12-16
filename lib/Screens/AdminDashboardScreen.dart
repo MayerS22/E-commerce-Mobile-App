@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Auth
-import 'package:fl_chart/fl_chart.dart'; // Import the fl_chart package
-import '../Models/Product.dart'; // Import your Product model
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:fl_chart/fl_chart.dart';
+import '../Models/Product.dart';
 import '../Models/Category.dart';
-import '../Services/Api-Service.dart'; // Import your ApiService
+import '../Services/Api-Service.dart';
 import 'TransactionReportScreen.dart';
-import 'UserFeedbackScreen.dart'; // Firebase Firestore for report
+import 'UserFeedbackScreen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   @override
@@ -24,7 +24,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this); // 3 tabs: Categories, Products, Best-Selling Chart
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -33,17 +33,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
     super.dispose();
   }
 
-  // Method to log out
   Future<void> _logOut() async {
     try {
       await FirebaseAuth.instance.signOut();
-      Navigator.pushReplacementNamed(context, '/login'); // Navigate to login screen
+      Navigator.pushReplacementNamed(context, '/login');
     } catch (e) {
       print('Error during logout: $e');
     }
   }
 
-  // Method to create a new category
   Future<void> _createCategory(String categoryName) async {
     try {
       await _apiService.createCategory(categoryName);
@@ -54,7 +52,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
     }
   }
 
-  // Method to create a new product
   Future<void> _createProduct(String productName, double productPrice) async {
     try {
       await _apiService.createProduct(productName, productPrice);
@@ -65,7 +62,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
     }
   }
 
-  // Method to fetch all categories
   Future<List<Category>> _fetchCategories() async {
     try {
       return await _apiService.fetchCategories();
@@ -75,7 +71,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
     }
   }
 
-  // Method to fetch all products
   Future<List<Product>> _fetchProducts() async {
     try {
       return await _apiService.fetchProducts();
@@ -85,7 +80,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
     }
   }
 
-  // Method to fetch best-selling products
   Future<List<Map<String, dynamic>>> _fetchBestSellingProducts() async {
     try {
       return await _apiService.getBestSellingProducts();
@@ -101,7 +95,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
       appBar: AppBar(
         title: Text("Admin Dashboard"),
         actions: [
-          // Report Icon
           IconButton(
             icon: Icon(Icons.report),
             onPressed: () {
@@ -111,19 +104,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
               );
             },
           ),
-          // User Feedback Icon
           IconButton(
             icon: Icon(Icons.feedback),
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => UserFeedbackScreen()), // Navigate to feedback screen
+                MaterialPageRoute(builder: (context) => UserFeedbackScreen()),
               );
             },
           ),
-          // Logout Icon
           IconButton(
-            icon: Icon(Icons.exit_to_app), // Log out icon
+            icon: Icon(Icons.exit_to_app),
             onPressed: _logOut,
           ),
         ],
@@ -259,7 +250,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
           // Best-Selling Products Chart Tab
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: FutureBuilder<List<Map<String, dynamic>>>( // Best-Selling products
+            child: FutureBuilder<List<Map<String, dynamic>>>(
               future: _fetchBestSellingProducts(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
@@ -270,26 +261,60 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                   return Text("No sales data available");
                 } else {
                   List<Map<String, dynamic>> bestSellingProducts = snapshot.data!;
+
+                  // Ensure we are working with integer values and find the max value
+                  int maxSales = bestSellingProducts
+                      .map((e) => e['quantity'] as int) // Explicitly cast quantity to integer
+                      .reduce((a, b) => a > b ? a : b); // Get the max quantity
+
                   return Container(
                     height: 300,
                     padding: EdgeInsets.all(8),
                     child: BarChart(
                       BarChartData(
                         alignment: BarChartAlignment.spaceAround,
-                        maxY: 20,
-                        barTouchData: BarTouchData(enabled: false),
-                        titlesData: FlTitlesData(show: true),
+                        maxY: maxSales.toDouble(), // maxY needs to be a double, but maxSales is already an integer
+                        barTouchData: BarTouchData(enabled: true),
+                        titlesData: FlTitlesData(
+                          show: true,
+                          bottomTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              getTitlesWidget: (double value, TitleMeta meta) {
+                                String productId = bestSellingProducts[value.toInt()]['productId'];
+                                return Text(productId, style: TextStyle(fontSize: 10));
+                              },
+                            ),
+                          ),
+                          leftTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              interval: 1, // Set interval to 1 to ensure integer values on the Y-axis
+                              getTitlesWidget: (value, meta) {
+                                // Show integer values on the Y-axis
+                                return Text(value.toInt().toString());
+                              },
+                            ),
+                          ),
+                          rightTitles: AxisTitles( // Hiding right titles
+                            sideTitles: SideTitles(showTitles: false), // Hide right-side titles
+                          ),
+                        ),
                         gridData: FlGridData(show: true),
                         borderData: FlBorderData(show: true),
-                        barGroups: bestSellingProducts.map((product) {
+                        barGroups: bestSellingProducts.asMap().entries.map((entry) {
+                          int index = entry.key;
+                          Map<String, dynamic> product = entry.value;
+                          int sales = product['quantity'] as int; // Ensure quantity is an integer
+
                           return BarChartGroupData(
-                            x: int.parse(product['productId']),
+                            x: index,
                             barRods: [
                               BarChartRodData(
-                                toY: product['totalSales'],
+                                toY: sales.toDouble(), 
                                 color: Colors.blue,
                                 width: 20,
-                                borderRadius: BorderRadius.zero,
+                                borderRadius: BorderRadius.circular(4),
                               ),
                             ],
                           );
@@ -301,12 +326,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
               },
             ),
           ),
+
+
+
+
         ],
       ),
     );
   }
 
-  // Method to create or update a category
   void _showCategoryDialog({String? initialCategoryName, String? categoryId}) {
     if (initialCategoryName != null) {
       _categoryNameController.text = initialCategoryName;
@@ -347,7 +375,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
     );
   }
 
-  // Method to update category
   Future<void> _updateCategory(String categoryId, String newName) async {
     try {
       await _apiService.updateCategory(categoryId, newName);
@@ -358,7 +385,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
     }
   }
 
-  // Method to delete category
   Future<void> _deleteCategory(String categoryId) async {
     try {
       await _apiService.deleteCategory(categoryId);
@@ -369,7 +395,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
     }
   }
 
-  // Method to create or update a product
   void _showProductDialog({String? initialProductName, double? initialProductPrice, String? productId}) {
     if (initialProductName != null) {
       _productNameController.text = initialProductName;
@@ -424,7 +449,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
     );
   }
 
-  // Method to update product
   Future<void> _updateProduct(String productId, String productName, double productPrice) async {
     try {
       await _apiService.updateProduct(productId, productName, productPrice);
@@ -435,7 +459,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
     }
   }
 
-  // Method to delete product
   Future<void> _deleteProduct(String productId) async {
     try {
       await _apiService.deleteProduct(productId);
